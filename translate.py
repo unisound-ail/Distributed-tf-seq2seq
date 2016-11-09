@@ -66,6 +66,13 @@ tf.app.flags.DEFINE_boolean("decode", False,
                             "Set to True for interactive decoding.")
 tf.app.flags.DEFINE_boolean("self_test", False,
                             "Run a self-test if this is set to True.")
+# For distributed
+tf.app.flags.DEFINE_string("ps_hosts", "",
+                           "Comma-separated list of hostname:port pairs")
+tf.app.flags.DEFINE_string("worker_hosts", "",
+                           "Comma-separated list of hostname:port pairs")
+tf.app.flags.DEFINE_string("job_name", "", "One of 'ps', 'worker'")
+tf.app.flags.DEFINE_integer("task_index", 0, "Index of task within the job")
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -130,79 +137,122 @@ def create_model(session, forward_only):
 
 
 def train():
-  """Train a en->fr translation model using WMT data."""
-  # Prepare WMT data.
-  print("Preparing WMT data in %s" % FLAGS.data_dir)
-  en_train, fr_train, en_dev, fr_dev, _, _ = data_utils.prepare_wmt_data(
-      FLAGS.data_dir, FLAGS.en_vocab_size, FLAGS.fr_vocab_size)
+  ps_hosts = FLAGS.ps_hosts.split(",")
+  worker_hosts = FLAGS.worker_hosts.split(",")
+  cluster = tf.train.ClusterSpec({"ps": ps_hosts, "worker": worker_hosts})
+  server = tf.train.Server(cluster,
+                           job_name=FLAGS.job_name,
+                           task_index=FLAGS.task_index)
 
-  with tf.Session() as sess:
-    # Create model.
-    print("Creating %d layers of %d units." % (FLAGS.num_layers, FLAGS.size))
-    model = create_model(sess, False)
+  if FLAGS.job_name == "ps":
+      server.join()
+  elif FLAGS.job_name == "worker":
+    with tf.device(tf.train.replica_device_setter(
+            worker_device="/job:worker/task:%d" % FLAGS.task_index,
+            cluster=cluster)):
 
-    # Read data into buckets and compute their sizes.
-    print ("Reading development and training data (limit: %d)."
-           % FLAGS.max_train_data_size)
-    dev_set = read_data(en_dev, fr_dev)
-    train_set = read_data(en_train, fr_train, FLAGS.max_train_data_size)
-    train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
-    train_total_size = float(sum(train_bucket_sizes))
-
-    # A bucket scale is a list of increasing numbers from 0 to 1 that we'll use
-    # to select a bucket. Length of [scale[i], scale[i+1]] is proportional to
-    # the size if i-th training bucket, as used later.
-    train_buckets_scale = [sum(train_bucket_sizes[:i + 1]) / train_total_size
-                           for i in xrange(len(train_bucket_sizes))]
-
-    # This is the training loop.
-    step_time, loss = 0.0, 0.0
-    current_step = 0
-    previous_losses = []
-    while True:
-      # Choose a bucket according to data distribution. We pick a random number
-      # in [0, 1] and use the corresponding interval in train_buckets_scale.
-      random_number_01 = np.random.random_sample()
-      bucket_id = min([i for i in xrange(len(train_buckets_scale))
-                       if train_buckets_scale[i] > random_number_01])
-
-      # Get a batch and make a step.
-      start_time = time.time()
-      encoder_inputs, decoder_inputs, target_weights = model.get_batch(
-          train_set, bucket_id)
-      _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs,
-                                   target_weights, bucket_id, False)
-      step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
-      loss += step_loss / FLAGS.steps_per_checkpoint
-      current_step += 1
-
-      # Once in a while, we save checkpoint, print statistics, and run evals.
-      if current_step % FLAGS.steps_per_checkpoint == 0:
-        # Print statistics for the previous epoch.
-        perplexity = math.exp(loss) if loss < 300 else float('inf')
-        print ("global step %d learning rate %.4f step-time %.2f perplexity "
-               "%.2f" % (model.global_step.eval(), model.learning_rate.eval(),
-                         step_time, perplexity))
-        # Decrease learning rate if no improvement was seen over last 3 times.
-        if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
-          sess.run(model.learning_rate_decay_op)
-        previous_losses.append(loss)
-        # Save checkpoint and zero timer and loss.
-        checkpoint_path = os.path.join(FLAGS.train_dir, "translate.ckpt")
-        model.saver.save(sess, checkpoint_path, global_step=model.global_step)
-        step_time, loss = 0.0, 0.0
-        # Run evals on development set and print their perplexity.
-        for bucket_id in xrange(len(_buckets)):
-          if len(dev_set[bucket_id]) == 0:
-            print("  eval: empty bucket %d" % (bucket_id))
-            continue
-          encoder_inputs, decoder_inputs, target_weights = model.get_batch(
-              dev_set, bucket_id)
-          _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs,
-                                       target_weights, bucket_id, True)
-          eval_ppx = math.exp(eval_loss) if eval_loss < 300 else float('inf')
-          print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
-        sys.stdout.flush()
+      """Train a en->fr translation model using WMT data."""
+      # Prepare WMT data.
+      print("Preparing WMT data in %s" % FLAGS.data_dir)
+      en_train, fr_train, en_dev, fr_dev, _, _ = data_utils.prepare_wmt_data(
+          FLAGS.data_dir, FLAGS.en_vocab_size, FLAGS.fr_vocab_size)
+      
+      
+      # Create model.
+      print("Creating %d layers of %d units." % (FLAGS.num_layers, FLAGS.size))
+      #session = tf.Session(config=tf.ConfigProto(log_device_placement=False))
+      #model = create_model(sess, False)
+      model = seq2seq_model.Seq2SeqModel(
+          FLAGS.en_vocab_size, FLAGS.fr_vocab_size, _buckets,
+          FLAGS.size, FLAGS.num_layers, FLAGS.max_gradient_norm, FLAGS.batch_size,
+          FLAGS.learning_rate, FLAGS.learning_rate_decay_factor,
+          forward_only=False)
+      global_step = tf.Variable(0, name='global_step', trainable=False)
+      init_op = tf.initialize_all_variables()
+    '''
+      ckpt = tf.train.get_checkpoint_state(FLAGS.train_dir)
+      if ckpt and tf.gfile.Exists(ckpt.model_checkpoint_path):
+        print("Reading model parameters from %s" % ckpt.model_checkpoint_path)
+        model.saver.restore(session, ckpt.model_checkpoint_path)
+      else:
+        print("Created model with fresh parameters.")
+        session.run(tf.initialize_all_variables())
+      #return model
+    '''
+    sv =tf.train.Supervisor(is_chief=(FLAGS.task_index == 0),
+                           #logdir="./dir/train",
+                           logdir=FLAGS.train_dir,
+                           init_op=init_op,
+                           global_step=global_step,
+                           save_model_secs=60)
+    #with sv.managed_session(server.target,config=tf.ConfigProto(allow_soft_placement=True,log_device_placement=True)) as sess:
+    with sv.managed_session(server.target) as sess:
+    
+      # Read data into buckets and compute their sizes.
+      print ("Reading development and training data (limit: %d)."
+             % FLAGS.max_train_data_size)
+      dev_set = read_data(en_dev, fr_dev)
+      train_set = read_data(en_train, fr_train, FLAGS.max_train_data_size)
+      train_bucket_sizes = [len(train_set[b]) for b in xrange(len(_buckets))]
+      train_total_size = float(sum(train_bucket_sizes))
+    
+      # A bucket scale is a list of increasing numbers from 0 to 1 that we'll use
+      # to select a bucket. Length of [scale[i], scale[i+1]] is proportional to
+      # the size if i-th training bucket, as used later.
+      train_buckets_scale = [sum(train_bucket_sizes[:i + 1]) / train_total_size
+                             for i in xrange(len(train_bucket_sizes))]
+    
+      # This is the training loop.
+      step_time, loss = 0.0, 0.0
+      current_step = 0
+      previous_losses = []
+      while True:
+        # Choose a bucket according to data distribution. We pick a random number
+        # in [0, 1] and use the corresponding interval in train_buckets_scale.
+        random_number_01 = np.random.random_sample()
+        bucket_id = min([i for i in xrange(len(train_buckets_scale))
+                         if train_buckets_scale[i] > random_number_01])
+    
+        # Get a batch and make a step.
+        start_time = time.time()
+        encoder_inputs, decoder_inputs, target_weights = model.get_batch(
+            train_set, bucket_id)
+        _, step_loss, _ = model.step(sess, encoder_inputs, decoder_inputs,
+                                     target_weights, bucket_id, False)
+        step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
+        loss += step_loss / FLAGS.steps_per_checkpoint
+        current_step += 1
+    
+        # Once in a while, we save checkpoint, print statistics, and run evals.
+        if current_step % FLAGS.steps_per_checkpoint == 0:
+          # Print statistics for the previous epoch.
+          perplexity = math.exp(loss) if loss < 300 else float('inf')
+          #print ("global step %d learning rate %.4f step-time %.2f perplexity "
+          #       "%.2f" % (model.global_step.eval(), model.learning_rate.eval(),
+          #                 step_time, perplexity))
+          print ("step-time %.2f perplexity "
+                 "%.2f" % (
+                           step_time, perplexity))
+          # Decrease learning rate if no improvement was seen over last 3 times.
+          if len(previous_losses) > 2 and loss > max(previous_losses[-3:]):
+            sess.run(model.learning_rate_decay_op)
+          previous_losses.append(loss)
+          # Save checkpoint and zero timer and loss.
+          checkpoint_path = os.path.join(FLAGS.train_dir, "translate.ckpt")
+          model.saver.save(sess, checkpoint_path, global_step=model.global_step)
+          step_time, loss = 0.0, 0.0
+          # Run evals on development set and print their perplexity.
+          for bucket_id in xrange(len(_buckets)):
+            if len(dev_set[bucket_id]) == 0:
+              print("  eval: empty bucket %d" % (bucket_id))
+              continue
+            encoder_inputs, decoder_inputs, target_weights = model.get_batch(
+                dev_set, bucket_id)
+            _, eval_loss, _ = model.step(sess, encoder_inputs, decoder_inputs,
+                                         target_weights, bucket_id, True)
+            eval_ppx = math.exp(eval_loss) if eval_loss < 300 else float('inf')
+            print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
+          sys.stdout.flush()
 
 
 def decode():
