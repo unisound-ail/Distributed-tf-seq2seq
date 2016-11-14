@@ -47,10 +47,22 @@ update 2016-11-12, add run seq2seq on k8s script<br>
 2.run mession<br>
   chmod +x create.sh;./create.sh<br>
 
+## Step 4 Seq2seq(CPU) on kubernetes
+update 2016-11-14<br>
+
+物理节点(GPU)1： ps节点、worker节点1<br>
+物理节点(GPU)2： worker节点2<br>
+
+kubectl create -f worker_ps_GPU.yaml<br>
+
+结论：<br>
+1. seq2seq训练在gpu集群跑通<br>
+2. 在一台物理节点上，目前只能启动一个gpu<br>
+
 ## Todo:
 - [x] Tensorflow(CPU) example on kubernetes
 - [ ] Tensorflow(GPU) example on kubernetes
 - [x] Seq2seq(CPU) on kubernetes
-- [ ] Seq2seq(GPU:one GPU in one pod) on kubernetes
+- [x] Seq2seq(GPU:one GPU in one pod) on kubernetes
 - [ ] Seq2seq(GPU:multi GPUs in one pod) on kubernetes
 
