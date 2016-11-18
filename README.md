@@ -41,7 +41,8 @@ step-time 0.25 perplexity 6.98<br>
 step-time 0.26 perplexity 5.28<br>
 step-time 0.26 perplexity 4.62<br>
 
-update 2016-11-12, add run seq2seq on k8s script<br>
+### add run seq2seq on k8s script<br>
+update 2016-11-12, 
 1.delete mession<br>
   chmod +x delete.sh;./delete.sh<br>
 2.run mession<br>
