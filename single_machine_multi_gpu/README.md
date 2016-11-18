@@ -108,3 +108,13 @@ while True:
   step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
   loss += step_loss[0] / FLAGS.steps_per_checkpoint
 ```
+
+### 注意,allow_soft_placement参数必须设置，防止某些op无法在gpu上运行：
+```python
+# Start running operations on the Graph. allow_soft_placement must be set to  
+# True to build towers on GPU, as some of the ops do not have GPU  
+# implementations.  
+
+config = tf.ConfigProto(allow_soft_placement=True)
+with tf.Session(config=config) as sess:
+```
