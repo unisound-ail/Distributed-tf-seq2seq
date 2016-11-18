@@ -31,8 +31,8 @@ Fri Nov 18 03:28:46 2016
 ```
 效率提升
 ```
-4gpu : sample-per-sec 532.69<br>
-1gpu : sample-per-sec 241.41<br>
+4gpu : sample-per-sec 532.69
+1gpu : sample-per-sec 241.41
 ```
 
 ## 如何将单卡的代码改为多卡
