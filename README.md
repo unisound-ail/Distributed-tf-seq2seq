@@ -61,7 +61,7 @@ kubectl create -f worker_ps_GPU.yaml<br>
 
 ## Todo:
 - [x] Tensorflow(CPU) example on kubernetes
-- [ ] Tensorflow(GPU) example on kubernetes
+- [x] Tensorflow(GPU) example on kubernetes
 - [x] Seq2seq(CPU) on kubernetes
 - [x] Seq2seq(GPU:one GPU in one pod) on kubernetes
 - [ ] Seq2seq(GPU:multi GPUs in one pod) on kubernetes
