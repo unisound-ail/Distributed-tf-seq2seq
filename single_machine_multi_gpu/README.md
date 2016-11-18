@@ -8,7 +8,7 @@
 
 sh run_single.sh<br>
 运行结果<br>
-'''
+```
 Fri Nov 18 03:28:46 2016<br>
 +-----------------------------------------------------------------------------+<br>
 | NVIDIA-SMI 367.44                 Driver Version: 367.44                    |<br>
@@ -28,25 +28,25 @@ Fri Nov 18 03:28:46 2016<br>
 |   3  GeForce GTX 980     Off  | 0000:09:00.0     Off |                  N/A |<br>
 | 26%   36C    P2    65W / 180W |   3782MiB /  4037MiB |     45%      Default |<br>
 +-------------------------------+----------------------+----------------------+<br>
-'''
+```
 效率提升
-'''
+```
 4gpu : sample-per-sec 532.69<br>
 1gpu : sample-per-sec 241.41<br>
-'''
+```
 
 ## 如何将单卡的代码改为多卡
 1. 为gpu单独创建model,注意这里并不改变单卡model的定义
-'''python
+```python
 for i in xrange(FLAGS.num_gpus):
   with tf.device('/gpu:%d' % i):
     with tf.name_scope('TOWER_%d' % (i)) as scope:
       # Create model.
       print("Creating %d layers of %d units On Gpu:%d." % (FLAGS.num_layers, FLAGS.size, i))
       model_list[i] = create_model2(sess, False)
-'''
+```
 收集每个gpu单独计算的loss和梯度
-'''python
+```python
       step_losses.append(model_list[i].losses[bucket_id])
       gradient_norms = []
       params = tf.trainable_variables()
@@ -56,9 +56,9 @@ for i in xrange(FLAGS.num_gpus):
       gradient_norms.append(norm)
       # Keep track of the gradients across all towers.
       tower_grads.append(clipped_gradients)
-'''
+```
 完整代码
-'''python
+```python
 for i in xrange(FLAGS.num_gpus):
   with tf.device('/gpu:%d' % i):
     with tf.name_scope('TOWER_%d' % (i)) as scope:
@@ -78,9 +78,9 @@ for i in xrange(FLAGS.num_gpus):
       gradient_norms.append(norm)
       # Keep track of the gradients across all towers.
       tower_grads.append(clipped_gradients)
-'''
+```
 2. 训练部分，多卡独立计算，所以我们需要为每个gpu分别提供input
-'''python
+```python
 while True:
   input_feed = {}
   for i in xrange(FLAGS.num_gpus):
@@ -107,4 +107,4 @@ while True:
   _,step_loss = sess.run([train_op,step_losses],input_feed)
   step_time += (time.time() - start_time) / FLAGS.steps_per_checkpoint
   loss += step_loss[0] / FLAGS.steps_per_checkpoint
-'''
+```
