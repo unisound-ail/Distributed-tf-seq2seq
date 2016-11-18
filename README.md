@@ -4,7 +4,7 @@ A TensorFlow seq2seq model on Kubernetes
 ## Step 1 tensorflow(cpu) on kubernetes
 https://github.com/xuerq/k8s-tensorflow/tree/master/examples/k8s_cpu_tensorflow
 
-## Step 3 tensorflow(cpu) on kubernetes
+## Step 3 Seq2seq(CPU) on kubernetes
 试验目的：将单机版tensorflow的seq2seq demo改为cpu分布式版本<br>
 试验方法：在一台服务器上，创建了2个worker节点，1个ps节点<br>
    sh run_ps.sh: create ps节点<br>
@@ -47,7 +47,7 @@ update 2016-11-12, add run seq2seq on k8s script<br>
 2.run mession<br>
   chmod +x create.sh;./create.sh<br>
 
-## Step 4 Seq2seq(CPU) on kubernetes
+## Step 4 Seq2seq(GPU:one GPU in one pod) on kubernetes
 update 2016-11-14<br>
 
 物理节点(GPU)1： ps节点、worker节点1<br>
@@ -63,10 +63,10 @@ kubectl create -f worker_ps_GPU.yaml<br>
 see ./single_machine_multi_gpu
 
 ## Todo:
-- [x] Tensorflow(CPU) example on kubernetes
-- [x] Tensorflow(GPU) example on kubernetes
-- [x] Seq2seq(CPU) on kubernetes
-- [x] Seq2seq(GPU:one GPU in one pod) on kubernetes
-- [x] Seq2seq(GPU:multi GPUs) on physical machine
-- [ ] Seq2seq(GPU:multi GPUs in one pod) on kubernetes
+- [x] 1. Tensorflow(CPU) example on kubernetes
+- [x] 2. Tensorflow(GPU) example on kubernetes
+- [x] 3. Seq2seq(CPU) on kubernetes
+- [x] 4. Seq2seq(GPU:one GPU in one pod) on kubernetes
+- [x] 5. Seq2seq(GPU:multi GPUs) on physical machine
+- [ ] 6. Seq2seq(GPU:multi GPUs in one pod) on kubernetes
 
