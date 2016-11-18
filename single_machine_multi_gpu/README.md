@@ -9,25 +9,25 @@
 sh run_single.sh<br>
 运行结果<br>
 ```
-Fri Nov 18 03:28:46 2016<br>
-+-----------------------------------------------------------------------------+<br>
-| NVIDIA-SMI 367.44                 Driver Version: 367.44                    |<br>
-|-------------------------------+----------------------+----------------------+<br>
-| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |<br>
-| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |<br>
-|===============================+======================+======================|<br>
-|   0  GeForce GTX 980     Off  | 0000:04:00.0     Off |                  N/A |<br>
-| 26%   41C    P2    64W / 180W |   3782MiB /  4037MiB |     40%      Default |<br>
-+-------------------------------+----------------------+----------------------+<br>
-|   1  GeForce GTX 980     Off  | 0000:05:00.0     Off |                  N/A |<br>
-| 26%   38C    P2    65W / 180W |   3782MiB /  4037MiB |     13%      Default |<br>
-+-------------------------------+----------------------+----------------------+<br>
-|   2  GeForce GTX 980     Off  | 0000:08:00.0     Off |                  N/A |<br>
-| 26%   37C    P2    67W / 180W |   3782MiB /  4037MiB |     39%      Default |<br>
-+-------------------------------+----------------------+----------------------+<br>
-|   3  GeForce GTX 980     Off  | 0000:09:00.0     Off |                  N/A |<br>
-| 26%   36C    P2    65W / 180W |   3782MiB /  4037MiB |     45%      Default |<br>
-+-------------------------------+----------------------+----------------------+<br>
+Fri Nov 18 03:28:46 2016
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 367.44                 Driver Version: 367.44                    |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|===============================+======================+======================|
+|   0  GeForce GTX 980     Off  | 0000:04:00.0     Off |                  N/A |
+| 26%   41C    P2    64W / 180W |   3782MiB /  4037MiB |     40%      Default |
++-------------------------------+----------------------+----------------------+
+|   1  GeForce GTX 980     Off  | 0000:05:00.0     Off |                  N/A |
+| 26%   38C    P2    65W / 180W |   3782MiB /  4037MiB |     13%      Default |
++-------------------------------+----------------------+----------------------+
+|   2  GeForce GTX 980     Off  | 0000:08:00.0     Off |                  N/A |
+| 26%   37C    P2    67W / 180W |   3782MiB /  4037MiB |     39%      Default |
++-------------------------------+----------------------+----------------------+
+|   3  GeForce GTX 980     Off  | 0000:09:00.0     Off |                  N/A |
+| 26%   36C    P2    65W / 180W |   3782MiB /  4037MiB |     45%      Default |
++-------------------------------+----------------------+----------------------+
 ```
 效率提升
 ```
@@ -36,7 +36,7 @@ Fri Nov 18 03:28:46 2016<br>
 ```
 
 ## 如何将单卡的代码改为多卡
-1. 为gpu单独创建model,注意这里并不改变单卡model的定义
+### 为gpu单独创建model,注意这里并不改变单卡model的定义
 ```python
 for i in xrange(FLAGS.num_gpus):
   with tf.device('/gpu:%d' % i):
@@ -45,7 +45,7 @@ for i in xrange(FLAGS.num_gpus):
       print("Creating %d layers of %d units On Gpu:%d." % (FLAGS.num_layers, FLAGS.size, i))
       model_list[i] = create_model2(sess, False)
 ```
-收集每个gpu单独计算的loss和梯度
+### 收集每个gpu单独计算的loss和梯度
 ```python
       step_losses.append(model_list[i].losses[bucket_id])
       gradient_norms = []
@@ -57,7 +57,7 @@ for i in xrange(FLAGS.num_gpus):
       # Keep track of the gradients across all towers.
       tower_grads.append(clipped_gradients)
 ```
-完整代码
+### 完整代码
 ```python
 for i in xrange(FLAGS.num_gpus):
   with tf.device('/gpu:%d' % i):
@@ -79,7 +79,7 @@ for i in xrange(FLAGS.num_gpus):
       # Keep track of the gradients across all towers.
       tower_grads.append(clipped_gradients)
 ```
-2. 训练部分，多卡独立计算，所以我们需要为每个gpu分别提供input
+### 训练部分，多卡独立计算，所以我们需要为每个gpu分别提供input
 ```python
 while True:
   input_feed = {}
