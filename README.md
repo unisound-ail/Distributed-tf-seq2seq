@@ -59,6 +59,9 @@ kubectl create -f worker_ps_GPU.yaml<br>
 1. seq2seq训练在gpu集群跑通<br>
 2. 在一台物理节点上，目前只能启动一个gpu<br>
 
+## Step 5 Seq2seq(GPU:multi GPUs) on physical machine
+see ./single_machine_multi_gpu
+
 ## Todo:
 - [x] Tensorflow(CPU) example on kubernetes
 - [x] Tensorflow(GPU) example on kubernetes
