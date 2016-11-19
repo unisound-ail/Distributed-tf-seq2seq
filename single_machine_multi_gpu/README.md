@@ -109,7 +109,7 @@ while True:
   loss += step_loss[0] / FLAGS.steps_per_checkpoint
 ```
 
-### 注意,allow_soft_placement参数必须设置，防止某些op无法在gpu上运行：
+### 注意1,allow_soft_placement参数必须设置，防止某些op无法在gpu上运行：
 ```python
 # Start running operations on the Graph. allow_soft_placement must be set to  
 # True to build towers on GPU, as some of the ops do not have GPU  
@@ -118,3 +118,42 @@ while True:
 config = tf.ConfigProto(allow_soft_placement=True)
 with tf.Session(config=config) as sess:
 ```
+
+### 注意2,tf.get_variable_scope().reuse_variables()必须设置，保证不同gpu的模型间可以共享变量：
+如果去掉会raise exception：变量重复定义
+```python
+Traceback (most recent call last):
+  File "translate.py", line 417, in <module>
+    tf.app.run()
+  File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/platform/app.py", line 30, in run
+    sys.exit(main(sys.argv))
+  File "translate.py", line 414, in main
+    train()
+  File "translate.py", line 233, in train
+    model_list[i] = create_model2(sess, False)
+  File "translate.py", line 141, in create_model2
+    forward_only=forward_only)
+  File "/usr/local/lib/python2.7/dist-packages/tensorflow/models/rnn/translate/seq2seq_model.py", line 86, in __init__
+    w = tf.get_variable("proj_w", [size, self.target_vocab_size])
+  File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/ops/variable_scope.py", line 873, in get_variable
+    custom_getter=custom_getter)
+  File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/ops/variable_scope.py", line 700, in get_variable
+    custom_getter=custom_getter)
+  File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/ops/variable_scope.py", line 217, in get_variable
+    validate_shape=validate_shape)
+  File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/ops/variable_scope.py", line 202, in _true_getter
+    caching_device=caching_device, validate_shape=validate_shape)
+  File "/usr/local/lib/python2.7/dist-packages/tensorflow/python/ops/variable_scope.py", line 494, in _get_single_variable
+    name, "".join(traceback.format_list(tb))))
+ValueError: Variable proj_w already exists, disallowed. Did you mean to set reuse=True in VarScope? Originally defined at:
+
+  File "/usr/local/lib/python2.7/dist-packages/tensorflow/models/rnn/translate/seq2seq_model.py", line 86, in __init__
+    w = tf.get_variable("proj_w", [size, self.target_vocab_size])
+  File "translate.py", line 141, in create_model2
+    forward_only=forward_only)
+  File "translate.py", line 233, in train
+    model_list[i] = create_model2(sess, False)
+```
+关于共享变量、variable_scope 以及 name_scope的作用和区别<br>
+http://stackoverflow.com/questions/35919020/whats-the-difference-of-name-scope-and-a-variable-scope-in-tensorflow<br>
+http://stackoverflow.com/questions/34215746/difference-between-variable-scope-and-name-scope-in-tensorflow<br>
