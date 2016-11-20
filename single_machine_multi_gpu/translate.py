@@ -158,7 +158,7 @@ def average_gradients(tower_grads):
     # Note that each grad_and_vars looks like the following:
     #   ((grad0_gpu0, var0_gpu0), ... , (grad0_gpuN, var0_gpuN))
     grads = []
-    for g, _ in grad_and_vars:
+    for g in grad_and_vars:
       # Add 0 dimension to the gradients to represent the tower.
       expanded_g = tf.expand_dims(g, 0)
 
@@ -172,9 +172,7 @@ def average_gradients(tower_grads):
     # Keep in mind that the Variables are redundant because they are shared
     # across towers. So .. we will just return the first tower's pointer to
     # the Variable.
-    v = grad_and_vars[0][1]
-    grad_and_var = (grad, v)
-    average_grads.append(grad_and_var)
+    average_grads.append(grad)
   return average_grads
 def train():
   """Train a en->fr translation model using WMT data."""
@@ -251,12 +249,7 @@ def train():
   
     #grads = average_gradients(tower_grads)
 
-    average_grads = tower_grads[0]
-    for i in xrange(FLAGS.num_gpus):
-      if(i>0):
-        average_grads = [tf.add(x,y) 
-                            for x, y in zip(average_grads, tower_grads[i])]
-    #average_grads = tf.div(average_grads,FLAGS.num_gpus)
+    average_grads = average_gradients(tower_grads)
  
     params = tf.trainable_variables()
     opt = tf.train.GradientDescentOptimizer(FLAGS.learning_rate)
@@ -330,6 +323,7 @@ def train():
         saver.save(sess, checkpoint_path, global_step= global_step)
         step_time, loss = 0.0, 0.0
         # Run evals on development set and print their perplexity.
+        '''
         for bucket_id in xrange(len(_buckets)):
           if len(dev_set[bucket_id]) == 0:
             print("  eval: empty bucket %d" % (bucket_id))
@@ -341,6 +335,7 @@ def train():
           eval_ppx = math.exp(eval_loss) if eval_loss < 300 else float('inf')
           print("  eval: bucket %d perplexity %.2f" % (bucket_id, eval_ppx))
         sys.stdout.flush()
+        '''
 
 
 def decode():
