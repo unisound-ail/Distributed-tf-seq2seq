@@ -54,7 +54,7 @@ global step 800 learning rate 0.5000 step-time 0.27 sample-per-sec 941.30 perple
   eval: bucket 3 perplexity 233.93
 global step 1000 learning rate 0.5000 step-time 0.27 sample-per-sec 936.27 perplexity 264.25
 ```
-1gpu : sample-per-sec 241.41
+1gpu : 
 ```
 global step 200 learning rate 0.5000 step-time 0.30 sample-per-sec 211.23 perplexity 1032.33
   eval: bucket 0 perplexity 225.31
