@@ -30,9 +30,64 @@ Fri Nov 18 03:28:46 2016
 +-------------------------------+----------------------+----------------------+
 ```
 效率提升
+4gpu : 
 ```
-4gpu : sample-per-sec 532.69
+global step 200 learning rate 0.5000 step-time 0.33 sample-per-sec 782.24 perplexity 688.39
+   eval: bucket 0 perplexity 279.72
+  eval: bucket 1 perplexity 235.40
+  eval: bucket 2 perplexity 261.60
+  eval: bucket 3 perplexity 617.31
+global step 400 learning rate 0.5000 step-time 0.32 -sampleper-sec 801.45 perplexity 425.08
+  eval: bucket 0 perplexity 242.39
+  eval: bucket 1 perplexity 262.32
+  eval: bucket 2 perplexity 251.14
+  eval: bucket 3 perplexity 275.40
+global step 600 learning rate 0.5000 step-time 0.39 sample-per-sec 656.86 perplexity 306.08
+  eval: bucket 0 perplexity 206.55
+  eval: bucket 1 perplexity 233.25
+  eval: bucket 2 perplexity 279.67
+  eval: bucket 3 perplexity 297.41
+global step 800 learning rate 0.5000 step-time 0.27 sample-per-sec 941.30 perplexity 278.51
+  eval: bucket 0 perplexity 186.01
+  eval: bucket 1 perplexity 244.04
+  eval: bucket 2 perplexity 217.89
+  eval: bucket 3 perplexity 233.93
+global step 1000 learning rate 0.5000 step-time 0.27 sample-per-sec 936.27 perplexity 264.25
+```
 1gpu : sample-per-sec 241.41
+```
+global step 200 learning rate 0.5000 step-time 0.30 sample-per-sec 211.23 perplexity 1032.33
+  eval: bucket 0 perplexity 225.31
+  eval: bucket 1 perplexity 309.99
+  eval: bucket 2 perplexity 327.17
+  eval: bucket 3 perplexity 320.64
+global step 400 learning rate 0.5000 step-time 0.25 sample-per-sec 252.13 perplexity 391.96
+  eval: bucket 0 perplexity 111.15
+  eval: bucket 1 perplexity 206.99
+  eval: bucket 2 perplexity 237.04
+  eval: bucket 3 perplexity 280.60
+global step 600 learning rate 0.5000 step-time 0.26 sample-per-sec 243.87 perplexity 288.47
+  eval: bucket 0 perplexity 79.37
+  eval: bucket 1 perplexity 187.94
+  eval: bucket 2 perplexity 199.98
+  eval: bucket 3 perplexity 251.38
+global step 800 learning rate 0.5000 step-time 0.28 sample-per-sec 231.45 perplexity 255.71
+  eval: bucket 0 perplexity 111.10
+  eval: bucket 1 perplexity 158.40
+  eval: bucket 2 perplexity 198.32
+  eval: bucket 3 perplexity 213.16
+global step 1000 learning rate 0.5000 step-time 0.26 sample-per-sec 244.82 perplexity 269.83
+  eval: bucket 0 perplexity 92.54
+  eval: bucket 1 perplexity 156.65
+  eval: bucket 2 perplexity 167.31
+  eval: bucket 3 perplexity 193.36
+global step 1200 learning rate 0.5000 step-time 0.26 sample-per-sec 242.49 perplexity 210.17
+  eval: bucket 0 perplexity 1336.21
+  eval: bucket 1 perplexity 496.46
+  eval: bucket 2 perplexity 387.85
+  eval: bucket 3 perplexity 293.78
+global step 1400 learning rate 0.5000 step-time 0.26 sample-per-sec 244.88 perplexity 235.90
+
 ```
 
 ## 如何将单卡的代码改为多卡
